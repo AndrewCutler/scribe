@@ -4,6 +4,7 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageEnhance, ImageTk
 import easyocr
 import cv2
+import pyperclip
 
 # TODO: Use grid() with rowconfigure / columnconfigure
 # .geometry(), grid_rowconfigure() etc.
@@ -91,8 +92,7 @@ class ImageApp:
                 self.text_widget.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
 
                 def callback(event):
-                    print(event)
-                    print(self.extracted_text)
+                    pyperclip.copy(self.extracted_text)
 
                 self.text_widget.bind("<Button-1>", callback)
             self.text_widget.delete(1.0, tk.END)
