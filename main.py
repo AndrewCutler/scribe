@@ -1,32 +1,34 @@
 # file: image_app.py
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageEnhance, ImageTk
+import easyocr
+import cv2
+
+# TODO: Use grid() with rowconfigure / columnconfigure
+# .geometry(), grid_rowconfigure() etc.
+
+BASE_HEIGHT = 100
+BASE_WIDTH = 400
+PADDING = 10
+
+
+# reader = easyocr.Reader(["en"])
+reader = easyocr.Reader(["en"], gpu=True)
 
 
 class ImageApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Cross-Platform Image POC")
-        self.root.geometry("600x500")
+        self.root.title("Scribe")
+        self.root.geometry(f"{BASE_WIDTH}x{BASE_HEIGHT}")
 
         # GUI elements
         self.label = tk.Label(root, text="No image loaded")
         self.label.pack(pady=10)
 
-        self.canvas = tk.Canvas(root, width=500, height=400, bg="gray")
-        self.canvas.pack()
-
         self.load_btn = tk.Button(root, text="Load Image", command=self.load_image)
         self.load_btn.pack(pady=5)
-
-        self.gray_btn = tk.Button(
-            root, text="Convert to Grayscale", command=self.convert_gray
-        )
-        self.gray_btn.pack(pady=5)
-
-        self.resize_btn = tk.Button(root, text="Resize 50%", command=self.resize_image)
-        self.resize_btn.pack(pady=5)
 
         self.image = None
         self.tk_image = None
@@ -37,29 +39,76 @@ class ImageApp:
         )
         if path:
             self.image = Image.open(path)
-            self.display_image(self.image)
             self.label.config(text=path)
+            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+
+            resized = cv2.resize(img, None, fx=2, fy=2)
+            sharpened = resized
+            sharpened = cv2.GaussianBlur(resized, (0, 0), 3)
+            sharpened = cv2.addWeighted(resized, 1.5, sharpened, -0.5, 0)
+            cv2.imwrite("temp.png", sharpened)
+
+            self.gray_btn = tk.Button(
+                root, text="Convert to text", command=self.convert_text
+            )
+            self.gray_btn.pack(pady=5)
+
+            self.root.geometry(
+                f"{max(self.image.width, BASE_WIDTH)}x{max(self.image.height, BASE_HEIGHT)}"
+            )
+
+            self.canvas = tk.Canvas(
+                root, width=self.image.width, height=self.image.height, bg="grey"
+            )
+            self.canvas.pack(padx=10, pady=10)
+
+            self.display_image(self.image)
 
     def display_image(self, img):
         # Resize to fit canvas
-        img_resized = ImageOps.contain(img, (500, 400))
-        self.tk_image = ImageTk.PhotoImage(img_resized)
-        self.canvas.create_image(250, 200, image=self.tk_image)
+        # img_resized = ImageOps.contain(img, (img.height, img.width))
+        # self.tk_image = ImageTk.PhotoImage(img_resized)
+        # TODO: fix sizing
+        self.tk_image = ImageTk.PhotoImage(img)
+        # print(f"Image dimensions: {img.width}x{img.height}")
+        #
+        # self.canvas.create_image(img.width, img.height, image=self.tk_image)
+        # self.canvas.create_image((50, 50), image=tk_image)
+        self.canvas.create_image((img.width / 2, img.height / 2), image=self.tk_image)
 
-    def convert_gray(self):
-        if self.image:
-            gray = self.image.convert("L")
-            self.display_image(gray)
-            self.image = gray
-        else:
-            messagebox.showwarning("Warning", "Load an image first!")
+        self.root.geometry(
+            f"{max(img.width + PADDING * 2, BASE_WIDTH)}x{max(img.height + BASE_HEIGHT + PADDING * 2, BASE_HEIGHT)}"
+        )
 
-    def resize_image(self):
+    def convert_text(self):
         if self.image:
-            w, h = self.image.size
-            resized = self.image.resize((w // 2, h // 2))
-            self.display_image(resized)
-            self.image = resized
+            result = reader.readtext("temp.png", decoder="wordbeamsearch")
+
+            if not hasattr(self, "text_widget"):
+                self.text_widget = tk.Text(
+                    self.root, height=8, wrap=tk.WORD, cursor="hand2"
+                )
+                self.text_widget.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
+
+                def callback(event):
+                    print(event)
+                    print(self.extracted_text)
+
+                self.text_widget.bind("<Button-1>", callback)
+            self.text_widget.delete(1.0, tk.END)
+
+            self.extracted_text = ""
+            for bbox, text, confidence in result:
+                print(f"{text} ({confidence*100:.2f}%)")
+                self.extracted_text += text + " "
+
+            self.text_widget.insert(1.0, self.extracted_text.strip())
+
+            self.root.geometry(
+                f"{max(self.image.width + PADDING * 2, BASE_WIDTH)}x{max(self.image.height + BASE_HEIGHT + 200, BASE_HEIGHT)}"
+            )
+
+            # delete temp.png
         else:
             messagebox.showwarning("Warning", "Load an image first!")
 
