@@ -1,6 +1,6 @@
 # file: image_app.py
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageEnhance, ImageTk
 import easyocr
 import cv2
@@ -13,6 +13,9 @@ BASE_HEIGHT = 100
 BASE_WIDTH = 400
 PADDING = 10
 
+BG_COLOR = "#081810"
+FG_COLOR = "#ddd"
+
 
 # reader = easyocr.Reader(["en"])
 reader = easyocr.Reader(["en"], gpu=True)
@@ -22,17 +25,28 @@ class ImageApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Scribe")
+        self.root.configure(bg=BG_COLOR)
         self.root.geometry(f"{BASE_WIDTH}x{BASE_HEIGHT}")
 
         # GUI elements
-        self.label = tk.Label(root, text="No image loaded")
+        self.label = ttk.Label(root, text="No image loaded")
         self.label.pack(pady=10)
 
-        self.load_btn = tk.Button(root, text="Load Image", command=self.load_image)
+        self.load_btn = ttk.Button(root, text="Load Image", command=self.load_image)
         self.load_btn.pack(pady=5)
 
         self.image = None
         self.tk_image = None
+
+        self.style = ttk.Style(self.root)
+        # Configure all ttk widgets to have black background
+        self.style.configure(".", background=BG_COLOR, foreground=FG_COLOR)
+        self.style.configure(
+            "TLabel",
+            background=BG_COLOR,
+            foreground=FG_COLOR,
+        )
+        self.style.configure("TButton", foreground=BG_COLOR)
 
     def load_image(self):
         path = filedialog.askopenfilename(
@@ -49,7 +63,7 @@ class ImageApp:
             sharpened = cv2.addWeighted(resized, 1.5, sharpened, -0.5, 0)
             cv2.imwrite("temp.png", sharpened)
 
-            self.gray_btn = tk.Button(
+            self.gray_btn = ttk.Button(
                 root, text="Convert to text", command=self.convert_text
             )
             self.gray_btn.pack(pady=5)
@@ -59,7 +73,7 @@ class ImageApp:
             )
 
             self.canvas = tk.Canvas(
-                root, width=self.image.width, height=self.image.height, bg="grey"
+                root, width=self.image.width, height=self.image.height, bg="black"
             )
             self.canvas.pack(padx=10, pady=10)
 
