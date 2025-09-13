@@ -9,11 +9,14 @@ import pyperclip
 # TODO: Use grid() with rowconfigure / columnconfigure
 # .geometry(), grid_rowconfigure() etc.
 
+# TODO: instead of "load image" button, just bind that event to empty text area
+# and then populate when copying.
+
 BASE_HEIGHT = 100
 BASE_WIDTH = 400
 PADDING = 10
 
-BG_COLOR = "#081810"
+BG_COLOR = "#1a1a1a"
 FG_COLOR = "#ddd"
 
 
@@ -24,6 +27,7 @@ reader = easyocr.Reader(["en"], gpu=True)
 class ImageApp:
     def __init__(self, root):
         self.root = root
+        self.loading = False
         self.root.title("Scribe")
         self.root.configure(bg=BG_COLOR)
         self.root.geometry(f"{BASE_WIDTH}x{BASE_HEIGHT}")
@@ -32,14 +36,24 @@ class ImageApp:
         self.label = ttk.Label(root, text="No image loaded")
         self.label.pack(pady=10)
 
-        self.load_btn = ttk.Button(root, text="Load Image", command=self.load_image)
-        self.load_btn.pack(pady=5)
+        self.text_widget = tk.Text(
+            self.root,
+            bg=FG_COLOR,
+            fg=BG_COLOR,
+            insertbackground="yellow",
+            cursor="hand2",
+            # height=3,  # Fixed height in lines
+            # width=50,  # Fixed width in characters
+        )
+        self.text_widget.pack(fill="x", expand=True, padx=10, pady=10)
+        self.text_widget.insert(tk.END, "Click to load an image")
+
+        self.text_widget.bind("<Button-1>", self.load_image)
 
         self.image = None
         self.tk_image = None
 
         self.style = ttk.Style(self.root)
-        # Configure all ttk widgets to have black background
         self.style.configure(".", background=BG_COLOR, foreground=FG_COLOR)
         self.style.configure(
             "TLabel",
@@ -48,7 +62,7 @@ class ImageApp:
         )
         self.style.configure("TButton", foreground=BG_COLOR)
 
-    def load_image(self):
+    def load_image(self, event=None):
         path = filedialog.askopenfilename(
             filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")]
         )
@@ -63,11 +77,6 @@ class ImageApp:
             sharpened = cv2.addWeighted(resized, 1.5, sharpened, -0.5, 0)
             cv2.imwrite("temp.png", sharpened)
 
-            self.gray_btn = ttk.Button(
-                root, text="Convert to text", command=self.convert_text
-            )
-            self.gray_btn.pack(pady=5)
-
             self.root.geometry(
                 f"{max(self.image.width, BASE_WIDTH)}x{max(self.image.height, BASE_HEIGHT)}"
             )
@@ -77,38 +86,28 @@ class ImageApp:
             )
             self.canvas.pack(padx=10, pady=10)
 
-            self.display_image(self.image)
+            # TODO: fix sizing
+            self.tk_image = ImageTk.PhotoImage(self.image)
+            self.canvas.create_image(
+                (self.image.width / 2, self.image.height / 2), image=self.tk_image
+            )
 
-    def display_image(self, img):
-        # Resize to fit canvas
-        # img_resized = ImageOps.contain(img, (img.height, img.width))
-        # self.tk_image = ImageTk.PhotoImage(img_resized)
-        # TODO: fix sizing
-        self.tk_image = ImageTk.PhotoImage(img)
-        # print(f"Image dimensions: {img.width}x{img.height}")
-        #
-        # self.canvas.create_image(img.width, img.height, image=self.tk_image)
-        # self.canvas.create_image((50, 50), image=tk_image)
-        self.canvas.create_image((img.width / 2, img.height / 2), image=self.tk_image)
+            self.text_widget.delete(1.0, tk.END)
+            self.text_widget.insert("end", "Click image to convert to text")
+            self.text_widget.unbind("<Button-1>")
+            self.text_widget.bind("<Button-1>", self.convert_text)
 
-        self.root.geometry(
-            f"{max(img.width + PADDING * 2, BASE_WIDTH)}x{max(img.height + BASE_HEIGHT + PADDING * 2, BASE_HEIGHT)}"
-        )
+            # TODO fix
+            self.root.geometry(
+                f"{max(self.image.width + PADDING * 2, BASE_WIDTH)}x{max(self.image.height + BASE_HEIGHT + PADDING * 2, BASE_HEIGHT)}"
+            )
 
-    def convert_text(self):
+    def convert_text(self, event=None):
         if self.image:
+            if self.loading:
+                return
+            self.loading = True
             result = reader.readtext("temp.png", decoder="wordbeamsearch")
-
-            if not hasattr(self, "text_widget"):
-                self.text_widget = tk.Text(
-                    self.root, height=8, wrap=tk.WORD, cursor="hand2"
-                )
-                self.text_widget.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
-
-                def callback(event):
-                    pyperclip.copy(self.extracted_text)
-
-                self.text_widget.bind("<Button-1>", callback)
             self.text_widget.delete(1.0, tk.END)
 
             self.extracted_text = ""
@@ -116,12 +115,20 @@ class ImageApp:
                 print(f"{text} ({confidence*100:.2f}%)")
                 self.extracted_text += text + " "
 
+            # self.text_widget.config(width=self.image.width)
             self.text_widget.insert(1.0, self.extracted_text.strip())
+            self.text_widget.update_idletasks()  # Update the widget first
+            line_count=2
+            # line_count = int(self.text_widget.index('end-1c').split('.')[0])
+            self.text_widget.config(height=line_count)
 
-            self.root.geometry(
-                f"{max(self.image.width + PADDING * 2, BASE_WIDTH)}x{max(self.image.height + BASE_HEIGHT + 200, BASE_HEIGHT)}"
-            )
+            self.loading = False
+            # self.root.geometry(
+            #     f"{max(self.image.width + PADDING * 2, BASE_WIDTH)}x{max(self.image.height + BASE_HEIGHT + 200, BASE_HEIGHT)}"
+            # )
 
+            pyperclip.copy(self.extracted_text)
+            # show success message or something
             # delete temp.png
         else:
             messagebox.showwarning("Warning", "Load an image first!")
