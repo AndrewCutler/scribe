@@ -23,6 +23,7 @@ def track_cursor(event):
     global cursor_x, cursor_y
     cursor_x, cursor_y = event.x, event.y
 
+
 class ImageApp:
     def __init__(self, root):
         self.root = root
@@ -59,7 +60,6 @@ class ImageApp:
         self.style.configure("TButton", foreground=BG_COLOR)
 
     def load_image(self, event=None):
-        print("load_image")
         path = filedialog.askopenfilename(
             filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")]
         )
@@ -72,7 +72,7 @@ class ImageApp:
             sharpened = resized
             sharpened = cv2.GaussianBlur(resized, (0, 0), 3)
             sharpened = cv2.addWeighted(resized, 1.5, sharpened, -0.5, 0)
-            cv2.imwrite("temp.png", sharpened)
+            self.image_data = sharpened
 
             self.canvas_widget = tk.Canvas(
                 root, width=self.image.width, height=self.image.height, bg="black"
@@ -97,7 +97,7 @@ class ImageApp:
             if self.loading:
                 return
             self.loading = True
-            result = reader.readtext("temp.png", decoder="wordbeamsearch")
+            result = reader.readtext(self.image_data, decoder="wordbeamsearch")
             self.text_widget.delete(1.0, tk.END)
 
             self.extracted_text = ""
@@ -126,9 +126,8 @@ class ImageApp:
             self.text_widget.configure(state=tk.DISABLED)
 
             copy_to_clipboard()
+            self.image_data = None
             self.loading = False
-
-            # delete temp.png
         else:
             messagebox.showwarning("Warning", "Load an image first!")
 
