@@ -146,6 +146,7 @@ class ImageApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.iconbitmap("icon.ico")
     root.bind("<Motion>", track_cursor)
     app = ImageApp(root)
     root.mainloop()
