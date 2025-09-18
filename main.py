@@ -25,15 +25,7 @@ def track_cursor(event):
 
 
 class ImageApp:
-    def __init__(self, root):
-        self.root = root
-        self.loading = False
-        self.image = None
-        self.tk_image = None
-
-        self.root.title("Scribe")
-        self.root.configure(bg=BG_COLOR)
-
+    def render_initial(self):
         self.label = ttk.Label(self.root, text="No image loaded")
         self.label.grid(row=0, column=0, pady=PADDING)
 
@@ -50,6 +42,60 @@ class ImageApp:
         self.text_widget.configure(state=tk.DISABLED)
         self.text_widget.bind("<Button-1>", self.load_image)
 
+    def render_image_loaded(self):
+        if not hasattr(self, 'canvas_widget'):
+            self.canvas_widget = tk.Canvas(
+                root, width=self.image.width, height=self.image.height, bg="black"
+            )
+            self.canvas_widget.grid(row=2, column=0, padx=PADDING, pady=PADDING)
+        else:
+            # Update existing canvas size
+            self.canvas_widget.config(width=self.image.width, height=self.image.height)
+
+        # TODO: move this out of this function?
+        self.tk_image = ImageTk.PhotoImage(self.image)
+        # TODO: fix sizing
+        self.canvas_widget.create_image(
+            (self.image.width / 2, self.image.height / 2), image=self.tk_image
+        )
+
+        self.text_widget.configure(state=tk.NORMAL)
+        self.text_widget.delete(1.0, tk.END)
+        self.text_widget.insert("end", "Click to convert to text")
+        self.text_widget.configure(state=tk.DISABLED)
+        self.text_widget.unbind("<Button-1>")
+        self.text_widget.bind("<Button-1>", self.convert_text)
+
+    def render_image_converted(self):
+        def copy_to_clipboard(event=None):
+            pyperclip.copy(self.extracted_text)
+            load_another_button_widget = tk.Button(
+                self.root, text="Load another image", command=self.load_image
+            )
+            load_another_button_widget.grid(row=1, column=0, padx=PADDING, pady=PADDING)
+            self.text_widget.grid(row=2)
+            self.canvas_widget.grid(row=3)
+
+        self.text_widget.configure(state=tk.NORMAL)
+        self.text_widget.delete(1.0, tk.END)
+        self.text_widget.insert(1.0, self.extracted_text.strip())
+        self.text_widget.update_idletasks()
+        self.text_widget.config(height=2)
+        self.text_widget.unbind("<Button-1>")
+        self.text_widget.bind("<Button-1>", copy_to_clipboard)
+        self.text_widget.configure(state=tk.DISABLED)
+
+        copy_to_clipboard()
+
+    def __init__(self, root):
+        self.root = root
+        self.loading = False
+        self.image = None
+        self.tk_image = None
+
+        self.root.title("Scribe")
+        self.root.configure(bg=BG_COLOR)
+
         self.style = ttk.Style(self.root)
         self.style.configure(".", background=BG_COLOR, foreground=FG_COLOR)
         self.style.configure(
@@ -58,6 +104,8 @@ class ImageApp:
             foreground=FG_COLOR,
         )
         self.style.configure("TButton", foreground=BG_COLOR)
+
+        self.render_initial()
 
     def load_image(self, event=None):
         path = filedialog.askopenfilename(
@@ -74,23 +122,7 @@ class ImageApp:
             sharpened = cv2.addWeighted(resized, 1.5, sharpened, -0.5, 0)
             self.image_data = sharpened
 
-            self.canvas_widget = tk.Canvas(
-                root, width=self.image.width, height=self.image.height, bg="black"
-            )
-            self.canvas_widget.grid(row=2, column=0, padx=PADDING, pady=PADDING)
-
-            # TODO: fix sizing
-            self.tk_image = ImageTk.PhotoImage(self.image)
-            self.canvas_widget.create_image(
-                (self.image.width / 2, self.image.height / 2), image=self.tk_image
-            )
-
-            self.text_widget.configure(state=tk.NORMAL)
-            self.text_widget.delete(1.0, tk.END)
-            self.text_widget.insert("end", "Click to convert to text")
-            self.text_widget.configure(state=tk.DISABLED)
-            self.text_widget.unbind("<Button-1>")
-            self.text_widget.bind("<Button-1>", self.convert_text)
+            self.render_image_loaded()
 
     def convert_text(self, event=None):
         if self.image:
@@ -105,27 +137,7 @@ class ImageApp:
                 print(f"{text} ({confidence*100:.2f}%)")
                 self.extracted_text += text + " "
 
-            def copy_to_clipboard(event=None):
-                pyperclip.copy(self.extracted_text)
-                load_another_button_widget = tk.Button(
-                    self.root, text="Load another image", command=self.load_image
-                )
-                load_another_button_widget.grid(
-                    row=1, column=0, padx=PADDING, pady=PADDING
-                )
-                self.text_widget.grid(row=2)
-                self.canvas_widget.grid(row=3)
-
-            self.text_widget.configure(state=tk.NORMAL)
-            self.text_widget.delete(1.0, tk.END)
-            self.text_widget.insert(1.0, self.extracted_text.strip())
-            self.text_widget.update_idletasks()
-            self.text_widget.config(height=2)
-            self.text_widget.unbind("<Button-1>")
-            self.text_widget.bind("<Button-1>", copy_to_clipboard)
-            self.text_widget.configure(state=tk.DISABLED)
-
-            copy_to_clipboard()
+            self.render_image_converted()
             self.image_data = None
             self.loading = False
         else:
