@@ -1,2 +1,4 @@
 .venv
-*.png
+**/*.png
+dist
+**/__pycache__
