@@ -1,10 +1,7 @@
-# file: image_app.py
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from PIL import Image, ImageEnhance, ImageTk
-import easyocr
-import cv2
-import pyperclip
+from PIL import Image, ImageTk
+from .core import load_image, copy_to_clipboard, convert_image_to_text
 
 BASE_HEIGHT = 100
 BASE_WIDTH = 400
@@ -12,9 +9,6 @@ PADDING = 10
 
 BG_COLOR = "#1a1a1a"
 FG_COLOR = "#ddd"
-
-# reader = easyocr.Reader(["en"])
-reader = easyocr.Reader(["en"], gpu=True)
 
 cursor_x, cursor_y = 0, 0
 
@@ -45,12 +39,14 @@ class ImageApp:
     def render_image_loaded(self):
         if not hasattr(self, 'canvas_widget'):
             self.canvas_widget = tk.Canvas(
-                root, width=self.image.width, height=self.image.height, bg="black"
+                self.root, width=self.image.width, height=self.image.height, bg="black"
             )
-            self.canvas_widget.grid(row=2, column=0, padx=PADDING, pady=PADDING)
+            self.canvas_widget.grid(
+                row=2, column=0, padx=PADDING, pady=PADDING)
         else:
             # Update existing canvas size
-            self.canvas_widget.config(width=self.image.width, height=self.image.height)
+            self.canvas_widget.config(
+                width=self.image.width, height=self.image.height)
 
         # TODO: move this out of this function?
         self.tk_image = ImageTk.PhotoImage(self.image)
@@ -67,25 +63,15 @@ class ImageApp:
         self.text_widget.bind("<Button-1>", self.convert_text)
 
     def render_image_converted(self):
-        def copy_to_clipboard(event=None):
-            pyperclip.copy(self.extracted_text)
-            load_another_button_widget = tk.Button(
-                self.root, text="Load another image", command=self.load_image
-            )
-            load_another_button_widget.grid(row=1, column=0, padx=PADDING, pady=PADDING)
-            self.text_widget.grid(row=2)
-            self.canvas_widget.grid(row=3)
-
         self.text_widget.configure(state=tk.NORMAL)
         self.text_widget.delete(1.0, tk.END)
         self.text_widget.insert(1.0, self.extracted_text.strip())
         self.text_widget.update_idletasks()
         self.text_widget.config(height=2)
         self.text_widget.unbind("<Button-1>")
-        self.text_widget.bind("<Button-1>", copy_to_clipboard)
+        self.text_widget.bind(
+            "<Button-1>", lambda ev: copy_to_clipboard(self.extracted_text))
         self.text_widget.configure(state=tk.DISABLED)
-
-        copy_to_clipboard()
 
     def __init__(self, root):
         self.root = root
@@ -114,29 +100,19 @@ class ImageApp:
         if path:
             self.image = Image.open(path)
             self.label.config(text=path)
-            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-
-            resized = cv2.resize(img, None, fx=2, fy=2)
-            sharpened = resized
-            sharpened = cv2.GaussianBlur(resized, (0, 0), 3)
-            sharpened = cv2.addWeighted(resized, 1.5, sharpened, -0.5, 0)
-            self.image_data = sharpened
-
+            self.image_data = load_image(path)
             self.render_image_loaded()
+        else:
+            raise FileNotFoundError(path)
 
     def convert_text(self, event=None):
         if self.image:
             if self.loading:
                 return
             self.loading = True
-            result = reader.readtext(self.image_data, decoder="wordbeamsearch")
             self.text_widget.delete(1.0, tk.END)
 
-            self.extracted_text = ""
-            for bbox, text, confidence in result:
-                print(f"{text} ({confidence*100:.2f}%)")
-                self.extracted_text += text + " "
-
+            self.extracted_text = convert_image_to_text(self.image_data)
             self.render_image_converted()
             self.image_data = None
             self.loading = False
@@ -144,7 +120,7 @@ class ImageApp:
             messagebox.showwarning("Warning", "Load an image first!")
 
 
-if __name__ == "__main__":
+def run():
     root = tk.Tk()
     try:
         root.iconbitmap("icon.ico")

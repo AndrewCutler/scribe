@@ -1,10 +1,13 @@
-import cv2
 import easyocr
+import cv2
 import pyperclip
-import click
-from termcolor import colored, cprint
+from termcolor import colored
 
 reader = easyocr.Reader(["en"], gpu=True)
+
+def copy_to_clipboard(extracted_text):
+    pyperclip.copy(extracted_text)
+    print(colored("Text copied to clipboard.", "green"))
 
 
 def convert_image_to_text(image_data):
@@ -18,8 +21,7 @@ def convert_image_to_text(image_data):
 
     print(colored("Conversion done.", "green"))
 
-    pyperclip.copy(extracted_text)
-    print(colored("Text opied to clipboard.", "green"))
+    copy_to_clipboard(extracted_text)
 
     return extracted_text
 
@@ -34,17 +36,3 @@ def load_image(path):
     image_data = sharpened
     print(colored("Image processed.", "green"))
     return image_data
-
-
-@click.command()
-@click.argument("path")
-def main(path):
-    print(path)
-    image_data = load_image(path)
-    converted = convert_image_to_text(image_data)
-    print(colored("TEXT:", "blue"))
-    print(converted)
-
-
-if __name__ == "__main__":
-    main()
