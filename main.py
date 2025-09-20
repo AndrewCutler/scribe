@@ -146,7 +146,11 @@ class ImageApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.iconbitmap("icon.ico")
+    try:
+        root.iconbitmap("icon.ico")
+    except tk.TclError:
+        # Icon file not found, continue without icon
+        pass
     root.bind("<Motion>", track_cursor)
     app = ImageApp(root)
     root.mainloop()
