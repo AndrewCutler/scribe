@@ -1,4 +1,6 @@
 .venv
 **/*.png
+build
 dist
 **/__pycache__
+**/*.exe

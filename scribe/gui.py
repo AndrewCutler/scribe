@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
-from .core import load_image, copy_to_clipboard, convert_image_to_text
+from .core import load_image, copy_to_clipboard, convert_to_text
 
 BASE_HEIGHT = 100
 BASE_WIDTH = 400
@@ -48,9 +48,8 @@ class ImageApp:
             self.canvas_widget.config(
                 width=self.image.width, height=self.image.height)
 
-        # TODO: move this out of this function?
-        self.tk_image = ImageTk.PhotoImage(self.image)
         # TODO: fix sizing
+        self.tk_image = ImageTk.PhotoImage(self.image)
         self.canvas_widget.create_image(
             (self.image.width / 2, self.image.height / 2), image=self.tk_image
         )
@@ -112,7 +111,7 @@ class ImageApp:
             self.loading = True
             self.text_widget.delete(1.0, tk.END)
 
-            self.extracted_text = convert_image_to_text(self.image_data)
+            self.extracted_text = convert_to_text(self.image_data)
             self.render_image_converted()
             self.image_data = None
             self.loading = False

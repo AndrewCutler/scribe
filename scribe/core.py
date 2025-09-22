@@ -10,7 +10,7 @@ def copy_to_clipboard(extracted_text):
     print(colored("Text copied to clipboard.", "green"))
 
 
-def convert_image_to_text(image_data):
+def convert_to_text(image_data):
     print(colored("Converting to text...", "yellow"))
     result = reader.readtext(image_data, decoder="wordbeamsearch")
 
