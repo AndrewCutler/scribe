@@ -1,2 +1,6 @@
 .venv
-*.png
+**/*.png
+build
+dist
+**/__pycache__
+**/*.exe
