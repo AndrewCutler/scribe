@@ -3,7 +3,16 @@ import cv2
 import pyperclip
 from termcolor import colored
 
-reader = easyocr.Reader(["en"], gpu=True)
+# Lazy-loaded reader to avoid slow startup
+_reader = None
+
+def get_reader():
+    global _reader
+    if _reader is None:
+        print(colored("Initializing OCR engine...", "yellow"))
+        _reader = easyocr.Reader(["en"], gpu=True)
+        print(colored("OCR engine ready.", "green"))
+    return _reader
 
 def copy_to_clipboard(extracted_text):
     pyperclip.copy(extracted_text)
@@ -12,6 +21,7 @@ def copy_to_clipboard(extracted_text):
 
 def convert_to_text(image_data):
     print(colored("Converting to text...", "yellow"))
+    reader = get_reader()
     result = reader.readtext(image_data, decoder="wordbeamsearch")
 
     extracted_text = ""
