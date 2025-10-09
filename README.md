@@ -129,10 +129,10 @@ python -m scribe.gui
 pip install pyinstaller
 
 # Build optimized CLI
-pyinstaller cli_optimized.spec
+pyinstaller --onefile cli_optimized.py
 
 # Build GUI
-pyinstaller gui_entry.spec
+pyinstaller --onefile gui_entry.py
 ```
 
 ## Performance Tips

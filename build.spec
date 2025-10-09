@@ -1,7 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-a = Analysis(
-    ["cli_entry.py"],
+# GUI Analysis
+gui_analysis = Analysis(
+    ["gui_entry.py"],
     pathex=[],
     binaries=[],
     datas=[('icon.ico', '.')],
@@ -12,15 +13,29 @@ a = Analysis(
     noarchive=False,
 )
 
-# Build the Python archive
-pyz = PYZ(a.pure)
+# CLI Analysis
+cli_analysis = Analysis(
+    ["cli_entry.py"],
+    pathex=[],
+    binaries=[],
+    datas=[],
+    hiddenimports=['easyocr', 'cv2', 'pyperclip', 'termcolor', 'click', 'PIL', 'PIL.Image', 'PIL.ImageTk'],
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=['tkinter', 'matplotlib', 'numpy.distutils'],
+    noarchive=False,
+)
+
+# Build the Python archives
+gui_pyz = PYZ(gui_analysis.pure)
+cli_pyz = PYZ(cli_analysis.pure)
 
 # GUI entry point
 gui_exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
+    gui_pyz,
+    gui_analysis.scripts,
+    gui_analysis.binaries,
+    gui_analysis.datas,
     [],
     name='scribe',
     console=False,
@@ -29,11 +44,15 @@ gui_exe = EXE(
 
 # CLI entry point
 cli_exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
+    cli_pyz,
+    cli_analysis.scripts,
+    cli_analysis.binaries,
+    cli_analysis.datas,
     [],
     name='scribe-cli',
     console=True,    # console enabled for CLI
+    bootloader_ignore_signals=False,
+    strip=True,      # Strip debug info for faster startup
+    upx=True,        # Compress for smaller size
+    runtime_tmpdir=None,
 )

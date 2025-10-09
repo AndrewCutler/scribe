@@ -1,10 +1,9 @@
-import cv2
 import click
 from termcolor import colored
-from .core import copy_to_clipboard, convert_to_text, load_image
 
 
 def convert_image(image_data):
+    from .core import convert_to_text, copy_to_clipboard  # Import here to avoid slow startup
     extracted_text = convert_to_text(image_data)
     copy_to_clipboard(extracted_text)
 
@@ -12,6 +11,7 @@ def convert_image(image_data):
 
 
 def get_image_data(path):
+    from .core import load_image  # Import here to avoid slow startup
     image_data = load_image(path)
     return image_data
 
@@ -19,7 +19,8 @@ def get_image_data(path):
 @click.command()
 @click.argument("path")
 def run(path):
-    print(path)
+    print(colored("Scribe CLI starting...", "cyan"))
+    print(f"Processing: {path}")
     image_data = get_image_data(path)
     converted = convert_image(image_data)
     print(colored("TEXT:", "blue"))

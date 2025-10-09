@@ -1,5 +1,3 @@
-import easyocr
-import cv2
 import pyperclip
 from termcolor import colored
 
@@ -10,6 +8,7 @@ def get_reader():
     global _reader
     if _reader is None:
         print(colored("Initializing OCR engine...", "yellow"))
+        import easyocr  # Import here to avoid slow startup
         _reader = easyocr.Reader(["en"], gpu=True)
         print(colored("OCR engine ready.", "green"))
     return _reader
@@ -37,6 +36,7 @@ def convert_to_text(image_data):
 
 
 def load_image(path):
+    import cv2  # Import here to avoid slow startup
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     print(colored("Image found.", "green"))
     resized = cv2.resize(img, None, fx=2, fy=2)
