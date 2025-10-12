@@ -19,8 +19,7 @@ def get_image_data(path):
 @click.command()
 @click.argument("path")
 def run(path):
-    print(colored("Scribe CLI starting...", "cyan"))
-    print(f"Processing: {path}")
+    print(colored(f"Processing: {path}", "cyan"))
     image_data = get_image_data(path)
     converted = convert_image(image_data)
     print(colored("TEXT:", "blue"))
