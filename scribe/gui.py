@@ -18,6 +18,40 @@ def track_cursor(event):
     cursor_x, cursor_y = event.x, event.y
 
 
+class Tooltip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tip_window = None
+        widget.bind("<Enter>", self.show_tooltip)
+        widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event=None):
+        if self.tip_window or not self.text:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 10
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)  # remove window borders
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(
+            tw,
+            text=self.text,
+            justify="left",
+            background="#ffffe0",
+            relief="solid",
+            borderwidth=1,
+            font=("tahoma", "8", "normal"),
+        )
+        label.pack(ipadx=4, ipady=2)
+
+    def hide_tooltip(self, event=None):
+        tw = self.tip_window
+        self.tip_window = None
+        if tw:
+            tw.destroy()
+
+
 class ImageApp:
     def render_initial(self):
         self.label = ttk.Label(self.root, text="No image loaded")
@@ -53,13 +87,16 @@ class ImageApp:
         self.convert_image_btn.grid(row=0, column=1)
 
     def render_image_converted(self):
-        self.text_widget = tk.Text(self.root, width=20, height=4, wrap="word")
+        self.text_widget = tk.Text(
+            self.root, width=20, height=4, wrap="word", cursor="hand2"
+        )
         self.text_widget.grid(row=3)
         self.text_widget.insert(1.0, self.extracted_text.strip())
         self.text_widget.config(state="disabled")
         self.text_widget.bind(
             "<Button-1>", lambda ev: copy_to_clipboard(self.extracted_text)
         )
+        Tooltip(self.text_widget, "Click to copy contents to clipboard")
         self.canvas_widget.grid(row=4)
 
     def __init__(self, root):
