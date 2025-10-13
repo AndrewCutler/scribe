@@ -15,6 +15,10 @@ Scribe is a powerful OCR (Optical Character Recognition) application that extrac
 
 ![example](./example.png)
 
+### Download
+
+[Download latest version.](https://github.com/AndrewCutler/scribe/releases/tag/v0.0.1-alpha)
+
 ## For Devs
 
 ### Install Dependencies
