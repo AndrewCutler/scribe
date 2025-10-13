@@ -13,7 +13,7 @@ Scribe is a powerful OCR (Optical Character Recognition) application that extrac
 
 ### Example
 
-![example](example.png)
+![example](./example.png)
 
 ## For Devs
 
