@@ -21,32 +21,25 @@ def track_cursor(event):
 class ImageApp:
     def render_initial(self):
         self.label = ttk.Label(self.root, text="No image loaded")
-        self.label.grid(row=0, column=0, pady=PADDING)
+        self.label.grid(row=0, column=0, pady=PADDING, padx=PADDING)
 
-        self.text_widget = tk.Text(
-            self.root,
-            bg=FG_COLOR,
-            fg=BG_COLOR,
-            insertbackground="yellow",
-            cursor="hand2",
-            height=2,
+        self.button_frame = tk.Frame(self.root)
+        self.button_frame.grid(row=1, column=0, padx=PADDING, pady=PADDING)
+        self.button_frame.configure(background=BG_COLOR)
+        self.load_image_btn = tk.Button(
+            self.button_frame, text="Load image", command=self.load_image
         )
-        self.text_widget.grid(row=1, column=0, padx=PADDING, pady=PADDING)
-        self.text_widget.insert(tk.END, "Click to load an image")
-        self.text_widget.configure(state=tk.DISABLED)
-        self.text_widget.bind("<Button-1>", self.load_image)
+        self.load_image_btn.grid(row=0, column=0, padx=PADDING, pady=PADDING)
 
     def render_image_loaded(self):
-        if not hasattr(self, 'canvas_widget'):
+        if not hasattr(self, "canvas_widget"):
             self.canvas_widget = tk.Canvas(
                 self.root, width=self.image.width, height=self.image.height, bg="black"
             )
-            self.canvas_widget.grid(
-                row=2, column=0, padx=PADDING, pady=PADDING)
+            self.canvas_widget.grid(row=2, column=0, padx=PADDING, pady=PADDING)
         else:
             # Update existing canvas size
-            self.canvas_widget.config(
-                width=self.image.width, height=self.image.height)
+            self.canvas_widget.config(width=self.image.width, height=self.image.height)
 
         # TODO: fix sizing
         self.tk_image = ImageTk.PhotoImage(self.image)
@@ -54,23 +47,20 @@ class ImageApp:
             (self.image.width / 2, self.image.height / 2), image=self.tk_image
         )
 
-        self.text_widget.configure(state=tk.NORMAL)
-        self.text_widget.delete(1.0, tk.END)
-        self.text_widget.insert("end", "Click to convert to text")
-        self.text_widget.configure(state=tk.DISABLED)
-        self.text_widget.unbind("<Button-1>")
-        self.text_widget.bind("<Button-1>", self.convert_text)
+        self.convert_image_btn = tk.Button(
+            self.button_frame, text="Convert to text", command=self.convert_text
+        )
+        self.convert_image_btn.grid(row=0, column=1)
 
     def render_image_converted(self):
-        self.text_widget.configure(state=tk.NORMAL)
-        self.text_widget.delete(1.0, tk.END)
+        self.text_widget = tk.Text(self.root, width=20, height=4, wrap="word")
+        self.text_widget.grid(row=3)
         self.text_widget.insert(1.0, self.extracted_text.strip())
-        self.text_widget.update_idletasks()
-        self.text_widget.config(height=2)
-        self.text_widget.unbind("<Button-1>")
+        self.text_widget.config(state="disabled")
         self.text_widget.bind(
-            "<Button-1>", lambda ev: copy_to_clipboard(self.extracted_text))
-        self.text_widget.configure(state=tk.DISABLED)
+            "<Button-1>", lambda ev: copy_to_clipboard(self.extracted_text)
+        )
+        self.canvas_widget.grid(row=4)
 
     def __init__(self, root):
         self.root = root
@@ -109,7 +99,6 @@ class ImageApp:
             if self.loading:
                 return
             self.loading = True
-            self.text_widget.delete(1.0, tk.END)
 
             self.extracted_text = convert_to_text(self.image_data)
             self.render_image_converted()
