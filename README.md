@@ -11,9 +11,12 @@ Scribe is a powerful OCR (Optical Character Recognition) application that extrac
 -   **Multiple Image Formats**: Supports PNG, JPG, JPEG, BMP, and GIF files
 -   **Confidence Scoring**: Shows confidence levels for each detected text segment
 
-### Example
+### Examples
 
-![example](./example.png)
+#### GUI
+![gui-example](./gui-example.png)
+
+#### CLIE
 
 ### Download
 

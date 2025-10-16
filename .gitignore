@@ -1,6 +1,7 @@
 .venv
 **/*.png
-!example.png
+!gui-example.png
+!cli-example.png
 build
 dist
 **/__pycache__

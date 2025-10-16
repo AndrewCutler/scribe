@@ -3,12 +3,13 @@
 
 [Setup]
 AppName=Scribe
-AppVersion=1.0
+AppVersion=0.0.1-alpha
 DefaultDirName={pf}\Scribe
 DefaultGroupName=Scribe
 OutputDir=dist
 OutputBaseFilename=scribe_installer
 ArchitecturesInstallIn64BitMode=x64
+UninstallDisplayName=Scribe
 PrivilegesRequired=admin
 
 [Files]

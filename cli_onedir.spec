@@ -6,10 +6,24 @@ cli_analysis = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=['easyocr', 'cv2', 'pyperclip', 'termcolor', 'click', 'PIL', 'PIL.Image', 'PIL.ImageTk'],
+    hiddenimports=[
+        'timeit',
+        'torch',
+        'torch._utils_internal',
+        'torch._strobelight.compile_time_profiler',
+        'torch._strobelight.cli_function_profiler',
+        'easyocr', 
+        'cv2', 
+        'pyperclip', 
+        'termcolor', 
+        'click', 
+        'PIL', 
+        'PIL.Image', 
+        'PIL.ImageTk'
+    ],
     hookspath=[],
     runtime_hooks=[],
-    excludes=['tkinter', 'matplotlib', 'numpy.distutils', 'scipy', 'sklearn', 'tensorflow', 'torch'],
+    excludes=['tkinter', 'matplotlib', 'numpy.distutils', 'scipy', 'sklearn', 'tensorflow'],
     noarchive=False,
 )
 
